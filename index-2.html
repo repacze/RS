@@ -1,0 +1,664 @@
+<!doctype html>
+<html lang="cs">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0b3b2e">
+<title>Texas Hold’em od nuly — česká interaktivní učebnice</title>
+<style>
+:root{
+  --bg:#071b16; --panel:#0d2b22; --panel2:#12382d; --felt:#0f5a43;
+  --gold:#d8b35d; --text:#f4f7f4; --muted:#b9c9c1; --danger:#e57373;
+  --ok:#77d2a3; --blue:#7fb6ff; --line:rgba(255,255,255,.1);
+  --shadow:0 12px 40px rgba(0,0,0,.28);
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:radial-gradient(circle at 50% -10%,#13523f 0,#071b16 43%,#05130f 100%);color:var(--text);font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;line-height:1.5}
+button,input{font:inherit}
+button{cursor:pointer}
+a{color:inherit}
+.container{max-width:1100px;margin:auto;padding:18px 16px 110px}
+.hero{padding:28px 0 18px}
+.hero h1{font-size:clamp(2rem,8vw,4.3rem);line-height:.98;margin:0 0 14px;letter-spacing:-.05em}
+.hero p{max-width:760px;color:var(--muted);font-size:1.06rem}
+.gold{color:var(--gold)}
+.grid{display:grid;gap:14px}
+.grid.two{grid-template-columns:repeat(2,minmax(0,1fr))}
+.grid.three{grid-template-columns:repeat(3,minmax(0,1fr))}
+.cardbox{background:linear-gradient(180deg,rgba(255,255,255,.045),rgba(255,255,255,.018));border:1px solid var(--line);border-radius:22px;padding:18px;box-shadow:var(--shadow)}
+.cardbox h2,.cardbox h3{margin-top:0}
+.muted{color:var(--muted)}
+.btn{border:0;border-radius:14px;padding:12px 16px;background:var(--gold);color:#1b160b;font-weight:800;box-shadow:0 6px 20px rgba(216,179,93,.18)}
+.btn.secondary{background:#214b3d;color:var(--text);border:1px solid var(--line)}
+.btn.ghost{background:transparent;border:1px solid var(--line);color:var(--text)}
+.btn.danger{background:#5b2525;color:#fff}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.kpi{font-size:1.7rem;font-weight:900}
+.view{display:none}
+.view.active{display:block}
+.topnav{position:sticky;top:0;z-index:20;background:rgba(5,19,15,.88);backdrop-filter:blur(14px);border-bottom:1px solid var(--line)}
+.topnav .inner{max-width:1100px;margin:auto;padding:10px 16px;display:flex;justify-content:space-between;align-items:center}
+.brand{font-weight:900;letter-spacing:-.03em}
+.progressbar{height:8px;background:#16372d;border-radius:20px;overflow:hidden}
+.progressbar>span{display:block;height:100%;background:linear-gradient(90deg,var(--gold),#ffe08b);width:0}
+.bottomnav{position:fixed;bottom:0;left:0;right:0;z-index:30;background:rgba(4,17,13,.96);border-top:1px solid var(--line);display:grid;grid-template-columns:repeat(5,1fr);padding:8px max(8px,env(safe-area-inset-right)) calc(8px + env(safe-area-inset-bottom)) max(8px,env(safe-area-inset-left))}
+.bottomnav button{background:none;border:0;color:#a9bbb2;padding:8px 4px;font-size:.76rem;font-weight:700}
+.bottomnav button.active{color:var(--gold)}
+.badge{display:inline-flex;align-items:center;gap:6px;background:#173c30;border:1px solid var(--line);padding:6px 10px;border-radius:999px;font-size:.85rem;color:#dfe9e4}
+.lesson-list{display:grid;gap:12px}
+.lesson{display:flex;justify-content:space-between;gap:16px;align-items:center}
+.lesson .num{width:42px;height:42px;border-radius:50%;display:grid;place-items:center;background:#173d31;color:var(--gold);font-weight:900;flex:0 0 auto}
+.lesson .done{color:var(--ok)}
+.poker-card{width:58px;height:82px;border-radius:9px;background:#fff;color:#111;display:inline-flex;flex-direction:column;justify-content:space-between;padding:6px;box-shadow:0 5px 14px rgba(0,0,0,.28);font-weight:900;border:1px solid #ddd}
+.poker-card.red{color:#c61f34}
+.poker-card .suit{font-size:1.35rem;align-self:center}
+.cards{display:flex;gap:7px;flex-wrap:wrap}
+.rank-table{display:grid;gap:10px}
+.rank-row{display:grid;grid-template-columns:170px 1fr;gap:12px;align-items:center;padding:12px;border:1px solid var(--line);border-radius:16px;background:rgba(255,255,255,.02)}
+.table-wrap{overflow:auto}
+.matrix{display:grid;grid-template-columns:repeat(13,40px);gap:3px;min-width:max-content}
+.handcell{width:40px;height:40px;border:0;border-radius:7px;color:#fff;font-size:.72rem;font-weight:800}
+.hand-strong{background:#266f4f}.hand-situ{background:#8c7137}.hand-fold{background:#493b3b}
+.poker-table{position:relative;min-height:360px;border:12px solid #4b2f1e;border-radius:48%;background:radial-gradient(circle,#147455,#0d4938 65%,#083729);box-shadow:inset 0 0 60px rgba(0,0,0,.35),var(--shadow);margin:22px auto;max-width:760px}
+.seat{position:absolute;min-width:82px;text-align:center;background:#0a211a;border:1px solid rgba(255,255,255,.18);padding:7px 8px;border-radius:14px;font-size:.8rem}
+.seat.hero{outline:3px solid var(--gold)}
+.seat.s1{top:-18px;left:50%;transform:translateX(-50%)} .seat.s2{top:22%;right:-22px}
+.seat.s3{bottom:16%;right:-22px}.seat.s4{bottom:-18px;left:50%;transform:translateX(-50%)}
+.seat.s5{bottom:16%;left:-22px}.seat.s6{top:22%;left:-22px}
+.centerpot{position:absolute;inset:0;display:grid;place-items:center;text-align:center;pointer-events:none}
+.centerpot .inner{max-width:62%}
+.choice{display:grid;gap:9px}
+.choice button{padding:13px 14px;border-radius:14px;border:1px solid var(--line);background:#15392e;color:#fff;text-align:left;font-weight:700}
+.choice button:hover{background:#1d4b3d}
+.choice button.correct{outline:2px solid var(--ok)}
+.choice button.wrong{outline:2px solid var(--danger)}
+.feedback{margin-top:12px;padding:13px;border-radius:14px;background:#102f26;border:1px solid var(--line)}
+input[type=number],input[type=search]{width:100%;background:#0b241c;border:1px solid var(--line);color:#fff;padding:12px 13px;border-radius:12px}
+label{font-weight:700;font-size:.9rem}
+.quizq{font-size:1.2rem;font-weight:800}
+.gloss{display:grid;gap:8px}
+.gloss-item{padding:12px 14px;border:1px solid var(--line);border-radius:14px;background:#0c251d}
+.cheatgrid{columns:2 280px;column-gap:14px}
+.cheatgrid .cardbox{break-inside:avoid;margin:0 0 14px}
+.notice{border-left:4px solid var(--gold);padding:12px 14px;background:#2c2a17;border-radius:8px}
+.small{font-size:.88rem}
+.section-title{margin-top:30px}
+hr{border:0;border-top:1px solid var(--line);margin:20px 0}
+@media(max-width:720px){
+ .grid.two,.grid.three{grid-template-columns:1fr}
+ .rank-row{grid-template-columns:1fr}
+ .poker-card{width:49px;height:70px}
+ .topnav .mini-hide{display:none}
+ .poker-table{min-height:315px;margin-left:8px;margin-right:8px}
+ .seat{min-width:68px;font-size:.7rem}
+ .matrix{grid-template-columns:repeat(13,34px)}
+ .handcell{width:34px;height:34px;font-size:.62rem}
+}
+</style>
+</head>
+<body>
+<header class="topnav">
+  <div class="inner">
+    <div class="brand">Texas Hold’em <span class="gold">od nuly</span></div>
+    <div class="mini-hide" style="min-width:260px">
+      <div class="small muted" id="progressText">Pokrok 0 %</div>
+      <div class="progressbar"><span id="progressFill"></span></div>
+    </div>
+  </div>
+</header>
+
+<main class="container">
+<section id="home" class="view active">
+  <div class="hero">
+    <span class="badge">Česky • interaktivně • bez registrace</span>
+    <h1>Texas Hold’em<br><span class="gold">od úplné nuly</span></h1>
+    <p>Pravidla, kombinace, pozice, sázkové akce, pot odds, šest vzorových partií krok za krokem a trenér rozhodování. Všechno je postavené pro telefon a ukládá pokrok přímo v prohlížeči.</p>
+    <div class="row">
+      <button class="btn" onclick="go('lessons')">Začít učebnici</button>
+      <button class="btn secondary" onclick="go('games')">Vzorové hry</button>
+    </div>
+  </div>
+  <div class="grid three">
+    <div class="cardbox"><div class="kpi">10</div><div class="muted">kombinací od high card po royal flush</div></div>
+    <div class="cardbox"><div class="kpi">6</div><div class="muted">interaktivních partií s rozhodováním</div></div>
+    <div class="cardbox"><div class="kpi">20+</div><div class="muted">situací v trenérovi i kvízu</div></div>
+  </div>
+  <h2 class="section-title">Jak se učit</h2>
+  <div class="grid three">
+    <div class="cardbox"><h3>1. Základy</h3><p class="muted">Nejdřív pochop průběh rozdání, kombinace a akce.</p></div>
+    <div class="cardbox"><h3>2. Vzorové hry</h3><p class="muted">Podívej se, jak se rozhodování mění preflop, na flopu, turnu a riveru.</p></div>
+    <div class="cardbox"><h3>3. Trenér</h3><p class="muted">Krátké situace s okamžitým vysvětlením upevní principy.</p></div>
+  </div>
+  <div class="notice" style="margin-top:18px"><strong>Poznámka:</strong> Učebnice vysvětluje pravidla a základní strategické principy. Negarantuje výhru. Hraní o skutečné peníze nese riziko ztráty.</div>
+</section>
+
+<section id="lessons" class="view">
+  <div class="hero"><h1>Lekce</h1><p>Projdi je popořadě. Každou můžeš označit jako dokončenou.</p></div>
+  <div id="lessonList" class="lesson-list"></div>
+
+  <div id="lessonContent" style="margin-top:24px"></div>
+</section>
+
+<section id="games" class="view">
+  <div class="hero"><h1>Vzorové hry</h1><p>Šest kompletních rozdání. V rozhodovacích bodech zvolíš akci a hned dostaneš vysvětlení.</p></div>
+  <div id="gamePicker" class="grid two"></div>
+  <div id="gamePlay" style="margin-top:18px"></div>
+</section>
+
+<section id="trainer" class="view">
+  <div class="hero"><h1>Trenér</h1><p>Začátečnický trénink principů. Není to GTO solver a nepočítá perfektní exploitativní strategii.</p></div>
+  <div class="cardbox">
+    <div class="row" style="justify-content:space-between"><span class="badge" id="trainerCount">Situace 1 / 20</span><span class="badge">Skóre: <b id="trainerScore">0</b></span></div>
+    <div id="trainerBody" style="margin-top:16px"></div>
+  </div>
+</section>
+
+<section id="cheat" class="view">
+  <div class="hero"><h1>Tahák</h1><p>Rychlá nápověda během učení.</p></div>
+  <div class="cheatgrid">
+    <div class="cardbox"><h3>Pořadí kombinací</h3><ol><li>Royal flush</li><li>Straight flush</li><li>Four of a kind</li><li>Full house</li><li>Flush</li><li>Straight</li><li>Three of a kind</li><li>Two pair</li><li>Pair</li><li>High card</li></ol></div>
+    <div class="cardbox"><h3>Streets</h3><p><b>Preflop</b> — po rozdání 2 vlastních karet.<br><b>Flop</b> — 3 společné karty.<br><b>Turn</b> — 4. společná karta.<br><b>River</b> — 5. společná karta.</p></div>
+    <div class="cardbox"><h3>Základní akce</h3><p><b>Fold</b> zahodit. <b>Check</b> nevsadit, když nemusíš dorovnávat. <b>Call</b> dorovnat. <b>Bet</b> vsadit. <b>Raise</b> navýšit. <b>All-in</b> vsadit celý stack.</p></div>
+    <div class="cardbox"><h3>Pravidlo 2 a 4</h3><p>Rychlá aproximace draw: na flopu s dvěma kartami do konce násob outs přibližně ×4. Na turnu s jednou kartou do konce přibližně ×2. Není to přesná matematika, ale je to dobrý mentální odhad.</p></div>
+    <div class="cardbox"><h3>Preflop orientace</h3><p>Velké páry a silná esa hraj častěji. Čím pozdější pozice, tím více kombinací může být rozumně hratelných. Slabé offsuit kombinace z časné pozice často zahazuj.</p></div>
+    <div class="cardbox"><h3>Jedna věta na postflop</h3><p>Silná hotová kombinace: získávej hodnotu. Slabá kombinace: kontroluj velikost potu. Draw: porovnej šanci s cenou callu.</p></div>
+  </div>
+</section>
+
+<section id="more" class="view">
+  <div class="hero"><h1>Další nástroje</h1></div>
+  <div class="grid two">
+    <div class="cardbox"><h2>Kvíz</h2><p class="muted">20 otázek napříč pravidly a strategií.</p><button class="btn" onclick="startQuiz()">Spustit kvíz</button></div>
+    <div class="cardbox"><h2>Slovníček CZ / EN</h2><p class="muted">Rychlé hledání pokerových pojmů.</p><button class="btn secondary" onclick="showGlossary()">Otevřít slovníček</button></div>
+  </div>
+  <div id="moreBody" style="margin-top:18px"></div>
+  <hr>
+  <button class="btn danger" onclick="resetProgress()">Resetovat celý pokrok</button>
+</section>
+</main>
+
+<nav class="bottomnav">
+  <button data-nav="home" onclick="go('home')">Domů</button>
+  <button data-nav="lessons" onclick="go('lessons')">Lekce</button>
+  <button data-nav="games" onclick="go('games')">Hry</button>
+  <button data-nav="trainer" onclick="go('trainer')">Trenér</button>
+  <button data-nav="cheat" onclick="go('cheat')">Tahák</button>
+</nav>
+
+<script>
+const suits={h:'♥',d:'♦',c:'♣',s:'♠'};
+function cardHTML(c){
+  const rank=c.slice(0,-1), s=c.slice(-1), red=(s==='h'||s==='d');
+  return `<span class="poker-card ${red?'red':''}"><span>${rank}${suits[s]}</span><span class="suit">${suits[s]}</span></span>`;
+}
+function cardsHTML(arr=[]){return `<div class="cards">${arr.map(cardHTML).join('')}</div>`}
+
+const state=JSON.parse(localStorage.getItem('holdemProgress')||'{"doneLessons":[],"gamesDone":[],"trainerBest":0,"quizBest":0,"lastView":"home"}');
+function save(){localStorage.setItem('holdemProgress',JSON.stringify(state));updateProgress()}
+function updateProgress(){
+  const total=8+6+20+20, done=state.doneLessons.length+state.gamesDone.length+(state.trainerBest||0)+(state.quizBest||0);
+  const pct=Math.min(100,Math.round(done/total*100));
+  document.getElementById('progressText').textContent=`Pokrok ${pct} %`;
+  document.getElementById('progressFill').style.width=pct+'%';
+}
+function go(id){
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  document.querySelectorAll('[data-nav]').forEach(b=>b.classList.toggle('active',b.dataset.nav===id));
+  state.lastView=id; save(); window.scrollTo({top:0,behavior:'smooth'});
+}
+function resetProgress(){
+  if(confirm('Opravdu smazat všechen uložený pokrok?')){
+    localStorage.removeItem('holdemProgress'); location.reload();
+  }
+}
+
+const rankings=[
+ ['Royal flush',['Ah','Kh','Qh','Jh','10h'],'A–K–Q–J–10 v jedné barvě. Nejvyšší možná kombinace.'],
+ ['Straight flush',['9s','8s','7s','6s','5s'],'Pět po sobě jdoucích karet v jedné barvě.'],
+ ['Four of a kind',['Qs','Qh','Qd','Qc','2s'],'Čtyři karty stejné hodnoty.'],
+ ['Full house',['Ks','Kh','Kd','9c','9d'],'Trojice + pár.'],
+ ['Flush',['Ah','Jh','8h','4h','2h'],'Pět karet stejné barvy, nemusí být po sobě.'],
+ ['Straight',['9s','8h','7c','6d','5s'],'Pět hodnot po sobě, barvy mohou být různé.'],
+ ['Three of a kind',['7s','7h','7d','Qc','2s'],'Tři stejné hodnoty.'],
+ ['Two pair',['Js','Jh','4c','4d','9s'],'Dva různé páry.'],
+ ['Pair',['As','Ah','Qc','8d','3s'],'Jeden pár.'],
+ ['High card',['As','Jh','9c','6d','2s'],'Nic výše; rozhoduje nejvyšší karta a kickery.']
+];
+
+const lessons=[
+ {id:'flow',title:'Jak funguje jedno rozdání',desc:'Vlastní karty, board, button, blindy a čtyři sázková kola.',
+ render:()=>`
+ <div class="cardbox"><h2>Jedno rozdání krok za krokem</h2>
+ <p>Každý hráč dostane <b>2 vlastní karty</b> (hole cards). Na stůl se postupně vyloží až <b>5 společných karet</b>. Na konci skládáš nejlepší možnou pětikaretní kombinaci z libovolných 5 karet ze 7 dostupných.</p>
+ <div class="grid two">
+  <div><h3>Pořadí streets</h3><ol><li><b>Preflop</b> — po rozdání 2 karet.</li><li><b>Flop</b> — vyloží se 3 společné karty.</li><li><b>Turn</b> — přidá se 4. karta.</li><li><b>River</b> — přidá se 5. karta.</li></ol></div>
+  <div><h3>Button a blindy</h3><p><b>BTN</b> označuje dealera. Vlevo od něj je <b>SB</b>, další <b>BB</b>. Blindy vytvářejí počáteční pot. Pozice buttonu se po každé hře posouvá.</p></div>
+ </div></div>`},
+ {id:'ranks',title:'Kombinace karet',desc:'Od royal flush po high card + procvičování.',
+ render:()=>`
+ <div class="cardbox"><h2>Pořadí kombinací</h2><div class="rank-table">${rankings.map((r,i)=>`<div class="rank-row"><div><b>${i+1}. ${r[0]}</b><br><span class="small muted">${r[2]}</span></div>${cardsHTML(r[1])}</div>`).join('')}</div></div>
+ <div class="cardbox" style="margin-top:14px"><h2>Procvičování</h2><div id="rankTrainer"></div></div>`},
+ {id:'position',title:'Pozice u stolu',desc:'UTG, MP, CO, BTN, SB a BB.',
+ render:()=>`
+ <div class="cardbox"><h2>Proč je pozice tak důležitá</h2><p>Čím později jednáš, tím víc informací máš o akcích soupeřů. Proto lze z CO a BTN rozumně otevírat širší výběr startovních kombinací než z UTG.</p>
+ ${tableHTML('BTN',[],[],0,'Pozice',true)}
+ <p class="muted small">Zjednodušený 6-max stůl: UTG → MP → CO → BTN → SB → BB. Preflop jedná první UTG; po flopu typicky SB/BB před hráči v pozdějších pozicích.</p></div>`},
+ {id:'actions',title:'Akce: fold, check, call, bet, raise',desc:'Co která akce znamená.',
+ render:()=>`
+ <div class="grid two">
+ ${[['Fold','Zahodíš karty a dál se rozdání neúčastníš.'],['Check','Nevsadíš, ale zůstáváš ve hře. Jde jen tehdy, když nemusíš nic dorovnat.'],['Call','Dorovnáš aktuální sázku.'],['Bet','Vsadíš jako první v daném sázkovém kole.'],['Raise','Navýšíš soupeřovu sázku.'],['All-in','Vsadíš celý zbývající stack.']].map(x=>`<div class="cardbox"><h3>${x[0]}</h3><p class="muted">${x[1]}</p></div>`).join('')}
+ </div>`},
+ {id:'terms',title:'Pot, stack, kicker, draw a pot odds',desc:'Základní pojmy a kalkulačka pot odds.',
+ render:()=>`
+ <div class="grid two">
+  <div class="cardbox"><h2>Základní pojmy</h2>
+   <p><b>Pot</b> — žetony uprostřed. <b>Stack</b> — žetony hráče. <b>Kicker</b> — vedlejší karta rozhodující remízy. <b>Draw</b> — nehotová kombinace, která se může zlepšit. <b>Outs</b> — karty, které ti typicky pomohou.</p>
+   <p><b>Value bet</b> — sázíš, protože čekáš call od horší kombinace. <b>Bluff</b> — sázíš, aby soupeř zahodil lepší kombinaci.</p>
+  </div>
+  <div class="cardbox"><h2>Pot odds kalkulačka</h2>
+   <label>Pot před soupeřovou sázkou</label><input id="potInput" type="number" value="100" min="0">
+   <label>Soupeř vsadil</label><input id="betInput" type="number" value="50" min="0">
+   <label>Kolik musíš dorovnat</label><input id="callInput" type="number" value="50" min="0">
+   <button class="btn" style="margin-top:10px" onclick="calcPotOdds()">Spočítat</button>
+   <div id="potOddsOut" class="feedback">Zadej čísla a stiskni Spočítat.</div>
+  </div>
+ </div>`},
+ {id:'preflop',title:'Preflop: startovní kombinace',desc:'13×13 matice a orientační síla hand.',
+ render:()=>`
+ <div class="cardbox"><h2>13×13 starting-hand matice</h2><p class="muted">Zelená = silná, zlatá = situační, šedá = většinou zahodit. Jde o výukovou orientaci, ne univerzální chart.</p><div class="table-wrap"><div id="matrix" class="matrix"></div></div><div id="handExplain" class="feedback">Klepni na kombinaci.</div></div>`},
+ {id:'postflop',title:'Postflop: hotová kombinace vs. draw',desc:'Top pair, overpair, set, draw a continuation bet.',
+ render:()=>`
+ <div class="grid two">
+  ${[
+  ['Top pair','Pár vytvořený s nejvyšší kartou boardu. Síla hodně závisí na kickeru a textuře boardu.'],
+  ['Overpair','Pocket pair vyšší než všechny karty na boardu, např. QQ na 9-6-2.'],
+  ['Set','Trojice vytvořená z pocket pair + jedné stejné karty na boardu. Bývá velmi silná a hůř čitelná.'],
+  ['Straight / flush draw','Chybí typicky jedna karta do postupky nebo barvy. Hodnotu rozhodnutí ovlivňují outs a cena callu.'],
+  ['OESD','Open-ended straight draw — postupku dokončí karta na obou koncích. Typicky 8 outs.'],
+  ['Gutshot','Vnitřní straight draw — postupku dokončí jen jedna hodnota. Typicky 4 outs.'],
+  ['Continuation bet','Sázka hráče, který byl agresorem preflop. Nedělej ji automaticky na každém boardu.'],
+  ['Praktické pravidlo','Silná made hand = získávej hodnotu; slabá = kontroluj pot; draw = porovnej šanci s cenou.']
+  ].map(x=>`<div class="cardbox"><h3>${x[0]}</h3><p class="muted">${x[1]}</p></div>`).join('')}
+ </div>`},
+ {id:'practice',title:'Mini kvíz a slovníček',desc:'Ověř si znalosti a dohledávej pojmy.',
+ render:()=>`<div class="grid two"><div class="cardbox"><h2>Kvíz</h2><p>20 otázek z pravidel, kombinací, pozic a základní strategie.</p><button class="btn" onclick="go('more');startQuiz()">Spustit</button></div><div class="cardbox"><h2>Slovníček</h2><p>České vysvětlení nejběžnějších anglických pokerových termínů.</p><button class="btn secondary" onclick="go('more');showGlossary()">Otevřít</button></div></div>`}
+];
+
+function renderLessonList(){
+ const el=document.getElementById('lessonList');
+ el.innerHTML=lessons.map((l,i)=>`<button class="cardbox lesson" style="text-align:left;color:inherit" onclick="openLesson('${l.id}')"><span class="num">${i+1}</span><span style="flex:1"><b>${l.title}</b><br><span class="muted small">${l.desc}</span></span><span class="${state.doneLessons.includes(l.id)?'done':'muted'}">${state.doneLessons.includes(l.id)?'✓':'›'}</span></button>`).join('');
+}
+function openLesson(id){
+ const l=lessons.find(x=>x.id===id); if(!l)return;
+ document.getElementById('lessonContent').innerHTML=l.render()+`<div class="row" style="margin-top:14px"><button class="btn" onclick="completeLesson('${id}')">${state.doneLessons.includes(id)?'Dokončeno ✓':'Označit jako dokončené'}</button></div>`;
+ if(id==='ranks') newRankQuestion();
+ if(id==='preflop') renderMatrix();
+ setTimeout(()=>document.getElementById('lessonContent').scrollIntoView({behavior:'smooth',block:'start'}),50);
+}
+function completeLesson(id){if(!state.doneLessons.includes(id))state.doneLessons.push(id);save();renderLessonList();openLesson(id)}
+
+function calcPotOdds(){
+ const pot=+document.getElementById('potInput').value||0, bet=+document.getElementById('betInput').value||0, call=+document.getElementById('callInput').value||0;
+ const finalBeforeCall=pot+bet, pct=call/(finalBeforeCall+call)*100;
+ document.getElementById('potOddsOut').innerHTML=`Musíš zaplatit <b>${call}</b> do výsledného potu <b>${finalBeforeCall+call}</b>. Potřebuješ přibližně <b>${pct.toFixed(1)} % equity</b>, aby byl call na čisté matematice break-even.`;
+}
+
+const rankQuestions=[
+ {cards:['Ah','Kh','Qh','Jh','10h'],a:'Royal flush'},
+ {cards:['8s','7s','6s','5s','4s','2h','Kd'],a:'Straight flush'},
+ {cards:['Qc','Qd','Qh','Qs','2d','9h','3c'],a:'Four of a kind'},
+ {cards:['Kh','Kd','Kc','9s','9d','2c','4h'],a:'Full house'},
+ {cards:['Ah','Jh','8h','4h','2h','Ks','Qd'],a:'Flush'},
+ {cards:['9s','8h','7d','6c','5s','Ah','Kd'],a:'Straight'},
+ {cards:['7s','7h','7d','Qc','2s','4h','5d'],a:'Three of a kind'},
+ {cards:['Js','Jh','4c','4d','9s','Ah','2c'],a:'Two pair'},
+ {cards:['As','Ah','Qc','8d','3s','4c','2h'],a:'Pair'},
+ {cards:['As','Jh','9c','6d','2s','4h','3c'],a:'High card'}
+];
+function newRankQuestion(){
+ const q=rankQuestions[Math.floor(Math.random()*rankQuestions.length)];
+ window.currentRankQ=q;
+ document.getElementById('rankTrainer').innerHTML=`${cardsHTML(q.cards)}<p><b>Jaká je nejlepší pětikaretní kombinace?</b></p><div class="choice">${rankings.map(r=>`<button onclick="answerRank('${r[0].replaceAll("'","\\'")}')">${r[0]}</button>`).join('')}</div><div id="rankFb"></div>`;
+}
+function answerRank(a){
+ const ok=a===currentRankQ.a;
+ document.getElementById('rankFb').innerHTML=`<div class="feedback">${ok?'Správně.':'Ne. '} Nejlepší kombinace je <b>${currentRankQ.a}</b>.</div><button class="btn secondary" style="margin-top:10px" onclick="newRankQuestion()">Další</button>`;
+}
+
+const ranks13=['A','K','Q','J','T','9','8','7','6','5','4','3','2'];
+function handCategory(a,b,suited,pair){
+ const hi=Math.max(14-ranks13.indexOf(a),14-ranks13.indexOf(b));
+ const ia=ranks13.indexOf(a), ib=ranks13.indexOf(b), gap=Math.abs(ia-ib);
+ if(pair){
+   const v=14-ia;
+   if(v>=10)return 'strong';
+   if(v>=6)return 'situ';
+   return 'situ';
+ }
+ const vals=[a,b];
+ if(vals.includes('A') && ['K','Q','J','T'].some(x=>vals.includes(x))) return 'strong';
+ if(vals.includes('K') && ['Q','J'].some(x=>vals.includes(x))) return suited?'strong':'situ';
+ if(suited && gap<=2 && ia<9 && ib<9)return 'situ';
+ if(suited && vals.includes('A'))return 'situ';
+ if(gap===1 && ia<8 && ib<8)return 'situ';
+ return 'fold';
+}
+function renderMatrix(){
+ const m=document.getElementById('matrix'); if(!m)return;
+ let html='';
+ for(let r=0;r<13;r++)for(let c=0;c<13;c++){
+   let a=ranks13[r],b=ranks13[c],pair=r===c,suited=c>r;
+   let label=pair?a+a:(suited?a+b+'s':b+a+'o');
+   let cat=handCategory(a,b,suited,pair);
+   html+=`<button class="handcell hand-${cat}" onclick="explainHand('${label}','${cat}')">${label}</button>`;
+ }
+ m.innerHTML=html;
+}
+function explainHand(label,cat){
+ const txt=cat==='strong'?'Silná výuková kategorie: často vhodná k agresivnímu vstupu do potu, ale vždy záleží na akci před tebou a stacku.'
+ :cat==='situ'?'Situační kombinace: její hodnota silně roste v pozdější pozici, proti slabší akci nebo při vhodných stackách.'
+ :'V začátečnickém rámci ji obvykle zahazuj, zvlášť z časné pozice nebo proti raisu.';
+ document.getElementById('handExplain').innerHTML=`<b>${label}</b>: ${txt}`;
+}
+
+const posOrder=['UTG','MP','CO','BTN','SB','BB'];
+function tableHTML(hero='BTN',heroCards=[],board=[],pot=0,label='',compact=false){
+ return `<div class="poker-table">
+ ${posOrder.map((p,i)=>`<div class="seat s${i+1} ${p===hero?'hero':''}"><b>${p}</b>${p===hero&&heroCards.length?`<div style="margin-top:4px">${heroCards.map(c=>cardHTML(c).replace('poker-card','poker-card').replace('width:','')).join('')}</div>`:''}</div>`).join('')}
+ <div class="centerpot"><div class="inner"><div class="badge">${label||'Pot'} ${pot?pot+' žetonů':''}</div>${board.length?`<div style="margin-top:10px">${cardsHTML(board)}</div>`:''}</div></div>
+ </div>`;
+}
+
+const games=[
+{
+ id:'aa',title:'AA na buttonu',subtitle:'Value betting přes více streets',hero:'BTN',cards:['As','Ad'],stacks:'100 BB effective',
+ takeaway:'S velmi silnou made hand nechceš soupeře vyhnat obří sázkou hned, ale chceš budovat pot a získávat hodnotu z horších párů a draws.',
+ steps:[
+  {street:'Preflop',board:[],pot:3,txt:'CO otevře na 2,5 BB. Jsi na BTN s A♠ A♦.',choices:[
+   ['Fold',false,'AA je nejsilnější startovní kombinace. Fold nedává smysl.'],
+   ['Call',false,'Call je možný v některých strategiích, ale pro začátečníka je proti open raisu standardní budovat pot raisem.'],
+   ['Raise na 8 BB',true,'Správně. Izoluješ raisera a stavíš větší pot se silnou kombinací.']]},
+  {street:'Flop',board:['Kh','7c','2s'],pot:18,txt:'CO callnul. Flop K♥ 7♣ 2♠. Soupeř checkuje.',choices:[
+   ['Check back',false,'Někdy lze checknout, ale tady je mnoho Kx a pocket párů, které mohou callnout sázku.'],
+   ['Bet přibližně 6 BB',true,'Malá až střední value sázka je dobrá: dostaneš call od Kx, QQ–88 i některých backdoor hand.'],
+   ['All-in',false,'Příliš velké. Horší handy často zahodí a silnější část range zůstane.']]},
+  {street:'Turn',board:['Kh','7c','2s','9d'],pot:30,txt:'Soupeř callne flop. Turn 9♦, znovu check.',choices:[
+   ['Bet 18–20 BB',true,'Další value sázka dává smysl. Board je stále relativně bezpečný.'],
+   ['Check vždy',false,'Check může být mix, ale ne „vždy“. Pro začátečníka je zde druhá value sázka přirozená.']]},
+  {street:'River',board:['Kh','7c','2s','9d','3c'],pot:68,txt:'Soupeř callne turn. River 3♣ a checkne.',choices:[
+   ['Menší value bet',true,'Ano. Kx a některé tvrdohlavé páry mohou zaplatit.'],
+   ['Automaticky check',false,'Přicházíš o value proti horším kombinacím.'],
+   ['All-in bez ohledu na stack',false,'Příliš mechanické. Velikost value betu má odpovídat handám, které čekáš, že zaplatí.']]}
+ ]},
+{
+ id:'aks',title:'AK suited a top pair',subtitle:'Silný kicker a kontrola textury boardu',hero:'CO',cards:['Ah','Kh'],stacks:'100 BB effective',
+ takeaway:'Top pair s top kickerem je silná, ale není nezničitelná. Sleduj, zda board přidává straight/flush možnosti a zda soupeř ukazuje extrémní sílu.',
+ steps:[
+  {street:'Preflop',board:[],pot:1.5,txt:'Fold k tobě na CO s A♥ K♥.',choices:[
+   ['Raise na 2,5 BB',true,'Standardní agresivní open.'],
+   ['Limp',false,'Limp ztrácí iniciativu a nechává levně realizovat equity více hráčům.'],
+   ['Fold',false,'AKs je příliš silná kombinace na fold bez předchozí extrémní akce.']]},
+  {street:'Flop',board:['Kd','8c','4h'],pot:6.5,txt:'BB callnul. Flop K♦ 8♣ 4♥, BB check.',choices:[
+   ['Bet asi 2–3 BB',true,'Malý c-bet získá value od Kx, 8x, pocket párů a některých backdoor hand.'],
+   ['Check z obavy z každého K',false,'Máš top pair top kicker; proti jednomu checku je to zbytečně pasivní.']]},
+  {street:'Turn',board:['Kd','8c','4h','9c'],pot:12,txt:'BB callne. Turn 9♣ přidává draws.',choices:[
+   ['Střední value bet',true,'Stále může platit mnoho horších Kx i draws.'],
+   ['All-in',false,'Na běžných stackách je to zbytečně velké.'],
+   ['Fold bez sázky soupeře',false,'Není k čemu foldovat.']]},
+  {street:'River',board:['Kd','8c','4h','9c','2s'],pot:32,txt:'Po callu turnu přijde bezpečná 2♠. BB checkuje.',choices:[
+   ['Value bet',true,'Bezpečný river často dovoluje třetí menší value sázku.'],
+   ['Bluff',false,'Nemáš bluff — máš silnou hotovou kombinaci.']]}
+ ]},
+{
+ id:'set88',title:'88 a set na flopu',subtitle:'Jak vytěžit skrytou sílu',hero:'MP',cards:['8s','8d'],stacks:'100 BB effective',
+ takeaway:'Set je velmi silná a často skrytá kombinace. Na suchém boardu nemusíš panikařit; na draw-heavy boardu buduj pot a nenechávej levné karty.',
+ steps:[
+  {street:'Preflop',board:[],pot:3,txt:'UTG otevře 2,5 BB, ty jsi MP s 8♠ 8♦.',choices:[
+   ['Call',true,'Call je rozumný, pokud jsou stacky dost hluboké a nehrozí agresivní squeeze.'],
+   ['Fold automaticky',false,'Pár osmiček má solidní hodnotu a set-mining potenciál.'],
+   ['All-in 100 BB',false,'Extrémně přehnané proti běžnému open raisu.']]},
+  {street:'Flop',board:['8h','Qc','3s'],pot:7,txt:'Flop 8♥ Q♣ 3♠. UTG betne 2,5 BB.',choices:[
+   ['Call',true,'Na suchém boardu může call udržet ve hře bluff i Qx. Raise je také možný, ale call je skvělá výuková volba.'],
+   ['Fold',false,'Máš set — velmi silnou kombinaci.']]},
+  {street:'Turn',board:['8h','Qc','3s','Jh'],pot:12,txt:'Turn J♥ přidává více draws. UTG betne 8 BB.',choices:[
+   ['Raise pro value',true,'Board je živější. Raise získá value od QJ, AQ, KK/AA a draws.'],
+   ['Jen call vždy',false,'Call zůstává možný, ale slovo „vždy“ ignoruje změnu textury.']]},
+  {street:'River',board:['8h','Qc','3s','Jh','2c'],pot:48,txt:'Po callu raisu soupeř na riveru checkne.',choices:[
+   ['Value bet',true,'Bezpečný river. Cílem je dostat zaplaceno od horších made hands.'],
+   ['Check back ze strachu z vyššího setu',false,'Vyšší set existuje, ale tvoří malou část rozsahu soupeře.']]}
+ ]},
+{
+ id:'ajdraw',title:'A♥ J♥ a nut flush draw',subtitle:'Outs a pot odds v praxi',hero:'BTN',cards:['Ah','Jh'],stacks:'100 BB effective',
+ takeaway:'Draw neposuzuj jen podle pocitu. Porovnej cenu callu s přibližnou šancí na zlepšení a přemýšlej, zda jsou všechny outs opravdu čisté.',
+ steps:[
+  {street:'Preflop',board:[],pot:3,txt:'CO otevře 2,5 BB, ty na BTN s A♥ J♥.',choices:[
+   ['Call nebo rozumný 3-bet',true,'Obě možnosti mohou být v běžném rámci v pořádku. Pro tuto lekci volíme call.'],
+   ['Fold vždy',false,'AJs je na buttonu proti CO open příliš silná na automatický fold.']]},
+  {street:'Flop',board:['Kh','7h','2c'],pot:7,txt:'Flop K♥ 7♥ 2♣. Máš nut flush draw. CO betne 4 BB.',choices:[
+   ['Call',true,'Máš 9 flush outs, často i overcard outs. Cena je přijatelná.'],
+   ['Fold automaticky, protože zatím nemáš pár',false,'Ignoruješ význam silného draw.'],
+   ['All-in vždy',false,'Semi-bluff může existovat, ale není povinný v každé situaci.']]},
+  {street:'Turn',board:['Kh','7h','2c','4s'],pot:15,txt:'Turn 4♠ mine. CO vsadí 10 BB. Po callu by byl pot 35 BB, platíš 10.',choices:[
+   ['Call',true,'Pot odds jsou 10 / 35 ≈ 28,6 %. Čistých 9 outs do flushe je přibližně 19,6 % na jednu kartu, takže samotná flush equity nestačí; ale overcard outs/implied odds mohou rozhodnutí přiblížit. Výukově je to hraniční a závislé na odhadu čistých outs.'],
+   ['Je to automaticky skvělý call jen kvůli 9 outs',false,'Na turnu už pravidlo 2 dává jen asi 18 %. Cena je vyšší.']]},
+  {street:'River',board:['Kh','7h','2c','4s','3h'],pot:35,txt:'River 3♥ dokončí nut flush.',choices:[
+   ['Sázka pro value po checku soupeře',true,'Máš nut flush. Snaž se získat value od horších flushí, Kx a silných párů.'],
+   ['Check ze strachu z vyšší flushe',false,'Vyšší flush neexistuje — držíš A♥.']]}
+ ]},
+{
+ id:'kqo',title:'KQ offsuit mimo pozici',subtitle:'Kdy brzdit',hero:'BB',cards:['Ks','Qd'],stacks:'100 BB effective',
+ takeaway:'Dobře vypadající dvě velké karty nejsou licence k velkému potu. Mimo pozici a na nepříjemných boardech je často správné kontrolovat pot a umět zahodit.',
+ steps:[
+  {street:'Preflop',board:[],pot:4,txt:'BTN otevře 2,5 BB, SB fold. Jsi BB s K♠ Q♦.',choices:[
+   ['Call',true,'Pro začátečnický rámec je call proti BTN open rozumný.'],
+   ['Fold vždy',false,'Proti široké BTN range je KQo příliš silné na automatický fold.']]},
+  {street:'Flop',board:['Qh','9h','8c'],pot:6,txt:'Flop Q♥ 9♥ 8♣. Máš top pair, ale board je velmi propojený. Checkneš, BTN betne 4 BB.',choices:[
+   ['Call',true,'Top pair má value, ale agresivní raise by zbytečně nafukoval pot na draw-heavy boardu.'],
+   ['Velký check-raise vždy',false,'Izoluješ se proti silnějším made hands a silným draws.']]},
+  {street:'Turn',board:['Qh','9h','8c','Jh'],pot:14,txt:'Turn J♥ dokončuje flush i mnoho straightů. BTN po tvém checku vsadí 11 BB.',choices:[
+   ['Fold je rozumný',true,'Tato karta dramaticky zhoršuje relativní sílu jednoho páru.'],
+   ['Call jen proto, že máš top pair',false,'Název kombinace nestačí; textura boardu a sizing soupeře jsou zásadní.']]},
+  {street:'River',board:['Qh','9h','8c','Jh','2s'],pot:14,txt:'Lekce končí po foldu na turnu.',choices:[
+   ['Přijmout, že fold může být ziskové rozhodnutí',true,'Správně. Neplatíš další žetony jen proto, abys „viděl, co měl“.'],
+   ['Litovat, že jsi nešel all-in na flopu',false,'Výsledek jedné runout sekvence neznamená, že riskantní dřívější akce byla lepší.']]}
+ ]},
+{
+ id:'76s',title:'76 suited a nedokončené draw',subtitle:'Nemusíš bluffovat každý river',hero:'CO',cards:['7c','6c'],stacks:'100 BB effective',
+ takeaway:'Když draw mine, bluff není automatická povinnost. Bluff má smysl, pokud reprezentuješ důvěryhodnou silnou range a soupeř má dost hand, které může zahodit.',
+ steps:[
+  {street:'Preflop',board:[],pot:1.5,txt:'Fold k tobě na CO s 7♣ 6♣.',choices:[
+   ['Raise jako situační open',true,'V pozdější pozici může suited connector fungovat jako situační open.'],
+   ['All-in',false,'Zbytečný risk.'],
+   ['Je to povinný raise z každé pozice',false,'Z UTG by stejná hand byla mnohem méně atraktivní.']]},
+  {street:'Flop',board:['8c','5d','2c'],pot:6.5,txt:'BB callnul. Flop 8♣ 5♦ 2♣. Máš OESD + flush draw. BB check.',choices:[
+   ['Bet jako semi-bluff',true,'Máš vysokou equity a můžeš vyhrát hned nebo se zlepšit.'],
+   ['Check je také obhajitelný',true,'Ano. Silný draw má dost equity na oba plány; záleží na soupeři.']]},
+  {street:'Turn',board:['8c','5d','2c','Kh'],pot:12,txt:'Po callu přichází K♥. BB check.',choices:[
+   ['Druhá sázka může dávat smysl',true,'K je dobrá scare karta pro preflop agresora a stále máš draw.'],
+   ['Automaticky vzdát každou draw na turnu',false,'Máš stále významnou equity.']]},
+  {street:'River',board:['8c','5d','2c','Kh','Qs'],pot:34,txt:'River Q♠ mine oba draws. BB checkne.',choices:[
+   ['Check back',true,'Výborně. Nemusíš bluffovat automaticky. Některé soupeřovy páry tě mohou často callnout a tvůj příběh nemusí být dost přesvědčivý.'],
+   ['All-in bluff vždy, když draw mine',false,'To je přesně návyk, kterému se chceme vyhnout. Bluff potřebuje důvod.']]}
+ ]}
+];
+
+function renderGames(){
+ document.getElementById('gamePicker').innerHTML=games.map((g,i)=>`<button class="cardbox" style="text-align:left;color:inherit" onclick="startGame('${g.id}')"><span class="badge">${state.gamesDone.includes(g.id)?'Dokončeno ✓':'Hra '+(i+1)}</span><h3>${g.title}</h3><p class="muted">${g.subtitle}</p></button>`).join('');
+}
+let currentGame=null,gameStep=0,gameAnswered=false;
+function startGame(id){
+ currentGame=games.find(g=>g.id===id); gameStep=0; renderGameStep();
+ document.getElementById('gamePlay').scrollIntoView({behavior:'smooth'});
+}
+function renderGameStep(){
+ const g=currentGame,s=g.steps[gameStep]; gameAnswered=false;
+ document.getElementById('gamePlay').innerHTML=`<div class="cardbox"><div class="row" style="justify-content:space-between"><span class="badge">${g.title}</span><span class="badge">${s.street} • ${gameStep+1}/${g.steps.length}</span></div>
+ ${tableHTML(g.hero,g.cards,s.board,s.pot,s.street)}
+ <div class="row"><div><b>Tvoje karty</b>${cardsHTML(g.cards)}</div><span class="badge">${g.stacks}</span></div>
+ <h3>${s.txt}</h3><div class="choice" id="gameChoices">${s.choices.map((c,i)=>`<button onclick="answerGame(${i})">${c[0]}</button>`).join('')}</div><div id="gameFb"></div></div>`;
+}
+function answerGame(i){
+ if(gameAnswered)return; gameAnswered=true;
+ const s=currentGame.steps[gameStep], c=s.choices[i];
+ const btns=[...document.querySelectorAll('#gameChoices button')];
+ btns[i].classList.add(c[1]?'correct':'wrong');
+ document.getElementById('gameFb').innerHTML=`<div class="feedback"><b>${c[1]?'Dobrá volba.':'Pozor.'}</b> ${c[2]}</div><button class="btn" style="margin-top:10px" onclick="nextGameStep()">${gameStep===currentGame.steps.length-1?'Shrnutí':'Pokračovat'}</button>`;
+}
+function nextGameStep(){
+ if(gameStep<currentGame.steps.length-1){gameStep++;renderGameStep()}
+ else{
+  if(!state.gamesDone.includes(currentGame.id))state.gamesDone.push(currentGame.id);save();renderGames();
+  document.getElementById('gamePlay').innerHTML=`<div class="cardbox"><span class="badge">Dokončeno</span><h2>Co si z této hry odnést</h2><p>${currentGame.takeaway}</p><button class="btn secondary" onclick="go('trainer')">Pokračovat do trenéra</button></div>`;
+ }
+}
+
+const trainer=[
+['UTG','As','Kd',[],'Fold k tobě. Co je základní plán s AKo?',['Open raise','Limp','Fold'],'Open raise','AKo je silná hand; z UTG ji běžně otevíráš raisem.'],
+['BTN','9h','8h',[],'Fold k tobě na BTN.',['Open raise','Fold vždy','Limp vždy'],'Open raise','Suited connector získává na buttonu hodnotu díky pozici.'],
+['BB','Qh','Jd',['Qs','7c','2d'],'BTN vsadil malý c-bet, máš top pair.',['Call','Fold','All-in vždy'],'Call','Top pair proti malé sázce na suchém boardu je typický call.'],
+['CO','Ac','Qc',['Qd','8s','3c'],'BB checkuje na flopu.',['Menší value bet','Check vždy','Fold'],'Menší value bet','Top pair top kicker má value proti horším Qx a pocket párům.'],
+['MP','7s','7d',['Ah','Kd','Qc'],'Soupeř c-betuje 2/3 potu na A-K-Q.',['Fold','Raise bluff vždy','Call vždy'],'Fold','Nízký pocket pair má na velmi vysokém boardu málo showdown value a málo zlepšení.'],
+['BTN','Ah','5h',['Kh','9h','2c'],'Máš nut flush draw, soupeř betne 1/3 potu.',['Call','Fold automaticky','All-in vždy'],'Call','Silný draw proti malé ceně často pokračuje.'],
+['BB','Ks','Qd',['Qh','9h','8c','Jh'],'Soupeř silně sází na turnu.',['Fold','Call jen kvůli top pair','Raise vždy'],'Fold','Turn dokončil řadu draws; relativní síla top pair prudce klesla.'],
+['CO','As','Ad',['Kh','7c','2s'],'Soupeř checkuje.',['Value bet','Check vždy','Fold'],'Value bet','Overpair k boardu a velmi silná made hand mají value.'],
+['BTN','8s','8d',['8h','Qc','3s'],'Soupeř betne malou sázku.',['Call nebo raise podle plánu','Fold','All-in automaticky'],'Call nebo raise podle plánu','Se setem můžeš trapovat callnutím nebo raisovat pro value.'],
+['SB','Jh','Th',['9h','8c','2h'],'Máš OESD + flush draw.',['Pokračovat agresivně nebo call','Fold vždy','Check-fold automaticky'],'Pokračovat agresivně nebo call','Kombinované draw má vysokou equity.'],
+['BTN','Ac','7d',['Ah','Ks','Qh','Jc'],'Na turnu máš top pair, ale board je extrémně propojený.',['Kontrolovat pot','Obří value raise vždy','Ignorovat board'],'Kontrolovat pot','Jedna pair hand je na takovém boardu zranitelná.'],
+['CO','6c','5c',['8c','7d','2c'],'Máš straight + flush draws.',['Semi-bluff je možný','Fold bez výjimky','Nemáš žádnou equity'],'Semi-bluff je možný','Silný draw může vyhrát fold equity i showdownem po zlepšení.'],
+['UTG','2s','7d',[],'Jsi první na řadě.',['Fold','Open raise','Limp'],'Fold','72o je jedna z nejslabších startovních kombinací.'],
+['BTN','Ks','Kd',[],'CO otevře, ty držíš KK.',['3-bet pro value','Fold','Call vždy'],'3-bet pro value','KK chce typicky stavět pot už preflop.'],
+['BB','Ah','Jc',['Ad','7s','4c'],'BTN betne 1/4 potu.',['Call','Fold','Raise all-in'],'Call','Top pair se slušným kickerem proti malé sázce pokračuje.'],
+['MP','9c','9d',['As','9h','3c'],'Máš set a soupeř checkuje.',['Value bet','Check ze strachu z esa vždy','Fold'],'Value bet','Set může získávat value od Ax a draws.'],
+['CO','Kd','Qd',['As','Jh','Tc'],'Máš broadway straight na flopu.',['Value/protection bet','Fold','Check vždy'],'Value/protection bet','Hotová straight je velmi silná, i když board může rozvíjet redraws.'],
+['BTN','7c','6c',['8c','5d','2c','Kh','Qs'],'River mine oba draws a soupeř checkuje.',['Check může být nejlepší','Bluff all-in vždy','Fold k vlastnímu checku'],'Check může být nejlepší','Missed draw neznamená automatický bluff.'],
+['SB','Qd','Qs',['9s','6c','2h'],'Jsi mimo pozici a máš overpair.',['Bet nebo check podle range, ale hand je silná','Fold','All-in bez důvodu'],'Bet nebo check podle range, ale hand je silná','Overpair je silná, ale sizing a plán stále záleží na soupeři.'],
+['BTN','Ad','5d',['Kd','Qd','8c','2s'],'Na turnu držíš nut flush draw, pot 30, soupeř vsadí 30.',['Cena je vysoká; spočítej odds','Call automaticky','Fold automaticky bez výpočtu'],'Cena je vysoká; spočítej odds','Pot odds jsou klíčové; draw se nemá hrát jen podle pocitu.']
+];
+let trainerIndex=0,trainerScore=0,trainerLocked=false;
+function renderTrainer(){
+ const t=trainer[trainerIndex];
+ document.getElementById('trainerCount').textContent=`Situace ${trainerIndex+1} / ${trainer.length}`;
+ document.getElementById('trainerScore').textContent=trainerScore;
+ document.getElementById('trainerBody').innerHTML=`<div class="row"><span class="badge">${t[0]}</span>${cardsHTML([t[1],t[2]])}</div>${t[3].length?`<p><b>Board</b></p>${cardsHTML(t[3])}`:''}<h3>${t[4]}</h3><div class="choice" id="trainerChoices">${t[5].map((x,i)=>`<button onclick="answerTrainer(${i})">${x}</button>`).join('')}</div><div id="trainerFb"></div>`;
+ trainerLocked=false;
+}
+function answerTrainer(i){
+ if(trainerLocked)return;trainerLocked=true;
+ const t=trainer[trainerIndex],picked=t[5][i],ok=picked===t[6]; if(ok)trainerScore++;
+ document.getElementById('trainerFb').innerHTML=`<div class="feedback"><b>${ok?'Správně.':'Nejlepší výuková volba: '+t[6]+'.'}</b> ${t[7]}</div><button class="btn" style="margin-top:10px" onclick="nextTrainer()">Další</button>`;
+}
+function nextTrainer(){
+ if(trainerIndex<trainer.length-1){trainerIndex++;renderTrainer()}
+ else{
+   state.trainerBest=Math.max(state.trainerBest||0,trainerScore);save();
+   document.getElementById('trainerBody').innerHTML=`<h2>Hotovo</h2><p>Skóre <b>${trainerScore}/${trainer.length}</b>.</p><button class="btn" onclick="trainerIndex=0;trainerScore=0;renderTrainer()">Znovu</button>`;
+ }
+}
+
+const quiz=[
+['Kolik vlastních karet dostane hráč v Texas Hold’em?',['1','2','3','5'],'2'],
+['Kolik společných karet může být na boardu?',['3','4','5','7'],'5'],
+['Co je flop?',['První 3 společné karty','Poslední karta','Povinná sázka','Druh páru'],'První 3 společné karty'],
+['Která kombinace je vyšší?',['Straight','Flush','Pair','Two pair'],'Flush'],
+['Co je kicker?',['Vedlejší karta rozhodující remízu','Povinný blind','Žeton dealera','Typ bluffu'],'Vedlejší karta rozhodující remízu'],
+['Co znamená check?',['Zahodit','Dorovnat','Nevsadit, když nemusíš dorovnat','Navýšit'],'Nevsadit, když nemusíš dorovnat'],
+['Co znamená call?',['Dorovnat aktuální sázku','Zahodit','Vsadit celý stack','Přeskočit tah'],'Dorovnat aktuální sázku'],
+['Co je set?',['Trojice z pocket pair + karty boardu','Dva páry','Flush draw','High card'],'Trojice z pocket pair + karty boardu'],
+['Co je OESD?',['Open-ended straight draw','Overpair equity set draw','Typ blindu','Hotová flush'],'Open-ended straight draw'],
+['Kolik outs mívá čistý flush draw při čtyřech kartách stejné barvy?',['4','6','8','9'],'9'],
+['Pravidlo 2 na turnu znamená přibližně…',['outs × 2 pro procenta na jednu kartu','pot × 2','stack × 2','blind × 2'],'outs × 2 pro procenta na jednu kartu'],
+['Která pozice typicky jedná nejpozději postflop?',['BTN','UTG','SB','BB'],'BTN'],
+['Proč je pozice výhoda?',['Vidíš více akcí soupeřů před rozhodnutím','Dostaneš lepší karty','Platíš menší blind','Máš víc žetonů'],'Vidíš více akcí soupeřů před rozhodnutím'],
+['Co je value bet?',['Sázka s očekáváním callu od horší handy','Sázka naslepo','Povinný blind','Sázka jen na riveru'],'Sázka s očekáváním callu od horší handy'],
+['Co je bluff?',['Sázka s cílem přimět lepší handu zahodit','Call s draw','Check s párem','Showdown'],'Sázka s cílem přimět lepší handu zahodit'],
+['AA preflop je…',['Velmi silná startovní kombinace','Automatický fold','Slabší než 72o','Draw'],'Velmi silná startovní kombinace'],
+['Top pair na velmi propojeném boardu je…',['Silná, ale může být zranitelná','Vždy nuts','Vždy fold','Vždy all-in'],'Silná, ale může být zranitelná'],
+['Pot odds porovnávají…',['Cenu callu s výsledným potem','Počet hráčů s počtem karet','Blind se stackem','Barvu karet s pozicí'],'Cenu callu s výsledným potem'],
+['Když river mine draw, bluff…',['Není automaticky povinný','Je vždy povinný','Je zakázaný','Je totožný s callem'],'Není automaticky povinný'],
+['Nejvyšší možná kombinace je…',['Royal flush','Full house','Four of a kind','Ace high'],'Royal flush']
+];
+let quizIndex=0,quizScore=0,quizWrong=[],quizLocked=false;
+function startQuiz(){go('more');quizIndex=0;quizScore=0;quizWrong=[];renderQuiz()}
+function renderQuiz(){
+ const q=quiz[quizIndex];
+ document.getElementById('moreBody').innerHTML=`<div class="cardbox"><div class="row" style="justify-content:space-between"><span class="badge">Otázka ${quizIndex+1}/${quiz.length}</span><span class="badge">Skóre ${quizScore}</span></div><p class="quizq">${q[0]}</p><div class="choice" id="quizChoices">${q[1].map((a,i)=>`<button onclick="answerQuiz(${i})">${a}</button>`).join('')}</div><div id="quizFb"></div></div>`;quizLocked=false;
+}
+function answerQuiz(i){
+ if(quizLocked)return;quizLocked=true;const q=quiz[quizIndex],ans=q[1][i],ok=ans===q[2];if(ok)quizScore++;else quizWrong.push(quizIndex);
+ document.getElementById('quizFb').innerHTML=`<div class="feedback">${ok?'<b>Správně.</b>':'Správná odpověď je <b>'+q[2]+'</b>.'}</div><button class="btn" style="margin-top:10px" onclick="nextQuiz()">Další</button>`;
+}
+function nextQuiz(){
+ if(quizIndex<quiz.length-1){quizIndex++;renderQuiz()}else{
+  state.quizBest=Math.max(state.quizBest||0,quizScore);save();
+  document.getElementById('moreBody').innerHTML=`<div class="cardbox"><h2>Kvíz dokončen</h2><p>Výsledek <b>${quizScore}/${quiz.length}</b>.</p><p class="muted">${quizWrong.length?'Chybné otázky: '+quizWrong.map(i=>i+1).join(', '):'Bez chyby.'}</p><button class="btn" onclick="startQuiz()">Zopakovat celý kvíz</button></div>`;
+ }
+}
+
+const glossary=[
+['All-in','Vsazení celého zbývajícího stacku.'],
+['Backdoor draw','Draw, které potřebuje zlepšení na turnu i riveru.'],
+['Bet','První sázka v daném sázkovém kole.'],
+['Big blind (BB)','Větší povinná sázka před rozdáním karet.'],
+['Bluff','Sázka nebo raise s cílem přimět lepší kombinaci zahodit.'],
+['Board','Společné karty na stole.'],
+['Broadway','Vysoké karty T–A; často také straight T-J-Q-K-A.'],
+['Button (BTN)','Dealer button; obvykle nejlepší pozice postflop.'],
+['Call','Dorovnání aktuální sázky.'],
+['Check','Pokračování bez sázky, pokud není co dorovnávat.'],
+['Continuation bet (c-bet)','Sázka na flopu od preflop agresora.'],
+['Cutoff (CO)','Pozice bezprostředně vpravo od buttonu.'],
+['Draw','Nehotová kombinace s možností zlepšení.'],
+['Equity','Podíl potu odpovídající pravděpodobnosti výhry v daném spotu.'],
+['Effective stack','Menší ze stacků hráčů, kteří mohou hrát o stejný pot.'],
+['Flop','První tři společné karty.'],
+['Flush','Pět karet stejné barvy.'],
+['Fold','Zahození kombinace.'],
+['Full house','Trojice a pár.'],
+['Gutshot','Vnitřní straight draw, typicky 4 outs.'],
+['Hand','Konkrétní kombinace hráče; používá se i pro celé rozdání.'],
+['High card','Nejnižší kategorie kombinace bez páru a výše.'],
+['Hole cards','Dvě vlastní skryté karty.'],
+['Implied odds','Budoucí potenciální výhra, kterou můžeš získat po zlepšení.'],
+['Kicker','Vedlejší karta používaná k rozlišení stejně silných párů apod.'],
+['Limp','Pouhé dorovnání big blindu preflop bez raisu.'],
+['Made hand','Hotová kombinace, např. pár, dvě dvojice nebo set.'],
+['Nuts','Aktuálně nejlepší možná kombinace vzhledem k boardu.'],
+['Open-ended straight draw (OESD)','Straight draw dokončitelná z obou stran, typicky 8 outs.'],
+['Out','Karta, která pravděpodobně zlepší hand na vítěznou kombinaci.'],
+['Overpair','Pocket pair vyšší než všechny karty boardu.'],
+['Pair','Jeden pár.'],
+['Pocket pair','Dvě vlastní karty stejné hodnoty.'],
+['Pot','Žetony uprostřed, o které se hraje.'],
+['Pot odds','Poměr ceny callu k výslednému potu.'],
+['Preflop','Sázkové kolo před flopem.'],
+['Raise','Navýšení sázky.'],
+['Range','Množina kombinací, které může hráč v dané situaci mít.'],
+['River','Pátá společná karta.'],
+['Set','Trojice vytvořená z pocket pair a jedné karty stejné hodnoty na boardu.'],
+['Showdown','Odhalení karet po skončení sázek.'],
+['Small blind (SB)','Menší povinná sázka před flopem.'],
+['Stack','Žetony, které má hráč před sebou.'],
+['Straight','Pět hodnot po sobě.'],
+['Suited','Dvě vlastní karty stejné barvy.'],
+['Three-bet (3-bet)','Re-raise preflop po open raisu.'],
+['Top pair','Pár s nejvyšší kartou boardu.'],
+['Turn','Čtvrtá společná karta.'],
+['Two pair','Dva různé páry.'],
+['Value bet','Sázka, u které očekáváš call od horších hand.']
+];
+function showGlossary(){
+ go('more');
+ document.getElementById('moreBody').innerHTML=`<div class="cardbox"><h2>Slovníček</h2><input id="glossSearch" type="search" placeholder="Hledat pojem…" oninput="filterGloss()"><div id="glossList" class="gloss" style="margin-top:12px"></div></div>`;
+ filterGloss();
+}
+function filterGloss(){
+ const q=(document.getElementById('glossSearch')?.value||'').toLowerCase();
+ document.getElementById('glossList').innerHTML=glossary.filter(x=>(x[0]+' '+x[1]).toLowerCase().includes(q)).map(x=>`<div class="gloss-item"><b>${x[0]}</b><br><span class="muted">${x[1]}</span></div>`).join('');
+}
+
+renderLessonList();renderGames();renderTrainer();updateProgress();go(state.lastView||'home');
+</script>
+</body>
+</html>
